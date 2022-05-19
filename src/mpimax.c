@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     MPI_Reduce(&localmax, &globalmax, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
     
     if (pid==0) {
-        printf("Root Node [%d] -  Global Max = %d\n", pid, globalmax);
+        printf("Global Max = %d\n", globalmax);
     }
     
     free(rnums);
