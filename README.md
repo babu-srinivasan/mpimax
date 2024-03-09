@@ -69,11 +69,11 @@ I have provided a `Makefile` in the repo to compile the program using `mpicc` co
 
 ![](doc/run-mpimax.png)
 
-Run the program `bin/mpimax` using `mpirun` utility (that is part of `open-mpi` library) E.g. `mpirun -np 3 bin/mpimax 5`. 
+Run the program `bin/mpimax` using `mpirun`  (that is part of `open-mpi` library). For our use case, we will just use a basic form of `mpirun` without going into the environment/machine/host specific details. The basic form specifies number of processes to start and the name of the program to execute E.g. `mpirun -np 3 bin/mpimax 5`. 
 
-`mpirun` takes two parameters:
+`mpirun` parameters used in this example:
 
->`-np` parameter specifies number of processes to create, in this case `3`, 
+>`-np` parameter specifies number of processes to start, in this case `3`, 
 
 > the name of the program executable (that we compiled in previous step) `bin/mpimax`. 
 > In our example, the program `mpimax` also takes a parameter `n` - number random integers that each node should create. 
@@ -82,6 +82,84 @@ Run the program `bin/mpimax` using `mpirun` utility (that is part of `open-mpi` 
 Here is a sample output: 
 
 ![](doc/mpirun-result.png)
+
+
+## Running the program in a cluster using `AWS ParallelCluster`
+Note: This option will require your own AWS account and you will incur charges for the resources you create in your AWS account. 
+
+### Prerequisites
+1. AWS Account. 
+   
+   Instructions for setting up an AWS account - https://docs.aws.amazon.com/parallelcluster/latest/ug/setting-up.html
+
+2. AWS CLI installed and configured with AWS credentials
+   
+   Instructions for installing AWS CLI and configuring the credentials. https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html 
+   If you don't want to configure CLI locally, you can use Cloud9 instance for all the CLI commands.
+   Ensure that you can access the AWS resources in your AWS account from the terminal (either local MacOS or Cloud9)
+
+3. EC2 Key pair (existing or generate new) saved as `pem` file e.g. `mpilab.pem`
+   
+   Instructions for creating EC2 Keypair if you don't have one already setup https://docs.aws.amazon.com/parallelcluster/latest/ug/set-up-keypair.html
+
+
+### Install, Configure and Create `AWS Parallel Cluster`
+Install AWS ParallelCluster from the terminal - either on MacOS or cloud9.
+
+`pip3 install "aws-parallelcluster" --upgrade --user`
+
+More details on parall cluster cli installation can be found here https://docs.aws.amazon.com/parallelcluster/latest/ug/install-v3-virtual-environment.html
+
+To configure `AWS ParallelCluster`, run `plcuster configure --config config.yaml` from the command line. Refer to `https://docs.aws.amazon.com/parallelcluster/latest/ug/install-v3-configuring.html` for details on configuration parameters.
+
+I have provided a sample `config.yaml` file in `pcluster/` directory of the repo.
+
+Create the cluster using the configuration file created above. 
+`pcluster create-cluster --cluster-name mpimax-demo --cluster-configuration config.yaml`
+
+![]()
+
+You can list the clusters using the following command and check the `clusterStatus`. Once the cluster is created successfully, we will move to the next step of running our mpimax program in the cluster.
+
+`pcluster list-clusters`
+
+![]()
+
+### Run `mpimax` program in the cluster
+
+We need to compile our program in the head node of the cluster. So, lets first ssh to the head node using `pcluster ssh` command. The EC2 keypair created earlier will be used for ssh authentication. 
+
+`pcluster ssh --cluster-name mpimax-demo -i ../pcluster/mpilab.pem`
+ 
+
+Clone the repo https://github.com/babu-srinivasan/mpimax.git 
+
+First, create a script that runs our MPI program. The script will then be submitted to the scheduler as a batch job. I have provided a sample script `mpimax-job.sbatch` in the repo 
+
+```sh 
+#!/bin/bash
+#SBATCH --job-name=mpi-max-demo
+#SBATCH --ntasks=3
+#SBATCH --output=%x_%j.out
+mpirun ./bin/mpimax
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
