@@ -11,10 +11,11 @@ Lets deep dive into the code. First, lets initialize the MPI library (`MPI_Init`
     MPI_Comm_size(MPI_COMM_WORLD, &p);  
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 ```
-Note that the program's command line arguments (in this example, 'n' - number of integers to generate) are to sent each process by passing the command line (`&argc` and `&argv`) arguments to `MPI_Init` (as shown above).
+Note that the program's command line arguments (in this example, 'n' - number of integers to generate) are sent to each process by passing the command line (`&argc` and `&argv`) arguments to `MPI_Init` (as shown above).
+
 `MPI_COMM_WORLD` is a special variable that references default group of communicators which is sufficient for basic MPI programming. 
 
-Each process generates `n` number of integers and computes the local max using the code below (this is very basic for loop for computing max). 
+Once the MPI is initliazed, each process generates `n` number of integers and computes the local max using the code below (this is very basic `for loop` for computing max value of an array of integers). 
 ```c
     int localmax=0; 
     srand((pid+1)*(unsigned) time(&t));
@@ -24,21 +25,28 @@ Each process generates `n` number of integers and computes the local max using t
             localmax = rnums[i];
     }
 ```
-Next, each process sends its localmax to process 0 using `MPI_Reduce` with MPI_MAX as the reduction operator to compute global max. 
+Next, to compute global max, each process sends its localmax to process 0 using `MPI_Reduce` with MPI_MAX as the reduction operator. 
 ```c
     int globalmax = 0;
     MPI_Reduce(&localmax, &globalmax, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
 ```
 Lets look at the parameters of `MPI_Reuce` in detail below:
+
 `MPI_Reduce(&sbuffer, &rbuffer, m, datatype, MPI_operation, root_process, MPI_COMM_WORLD);`
 
-`&sbuffer` - pointer to the send buffer that holds, in our example, `localmax` computed by each process. This buffer is sent to the `root` process (process 0, in our example)
-`&rbuffer` - pointer to the receive buffer that `root` process (process 0, in our example) will populate with global max value.  
-`m` - number of elements of `datatype` present in the send buffer (`&sbuffer`) - in our example, each process sends one integer to `root` process.
-`datatype` - MPI_INT for integer data type
-`MPI_operation` - MPI_MAX since we want compute MAX
-`root_process` - process id of the root process that will compute/receive the global max (in our case, it is process 0)
-`MPI_COMM_WORLD` - default communicator
+> `&sbuffer` - pointer to the send buffer that holds, in our example, `localmax` computed by each process. This buffer is sent to the `root` process (process 0, in our example)
+>
+> `&rbuffer` - pointer to the receive buffer that `root` process (process 0, in our example) will populate with global max value. 
+>
+>`m` - number of elements of `datatype` present in the send buffer (`&sbuffer`) - in our example, each process sends one integer to `root` process.
+>
+>`datatype` - MPI_INT for integer data type
+>
+>`MPI_operation` - MPI_MAX since we want compute MAX
+>
+>`root_process` - process id of the root process that will compute/receive the global max (in our case, it is process 0)
+>
+>`MPI_COMM_WORLD` - default communicator
 
 Now that process 0 has computed the global max and the buffer `&globalmax` is populated with max value, we print the global max to console. Since process 0 is the one that is computing global max, we should first check if the running process pid is 0, then print the variable `globalmax`;
 ```c
