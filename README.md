@@ -65,7 +65,27 @@ Complete the following pre-requisites.
    
    `brew install open-mpi`
 
-I have provided a `Makefile` in the repo to compile the program. From the root directory of the repo, run `make`. This will compile the C program and generate the executable file in `bin/` directory. 
+I have provided a `Makefile` in the repo to compile the program using `mpicc` compiler. From the root directory of the repo, run `make`. This will compile the C program and generate the executable file `mpimax` in `bin/` directory. 
+
+![](doc/run-mpimax.png)
+
+Run the program `bin/mpimax` using `mpirun` utility (that is part of `open-mpi` library) E.g. `mpirun -np 3 bin/mpimax 5`. 
+
+`mpirun` takes two parameters:
+
+>`-np` parameter specifies number of processes to create, in this case `3`, 
+
+> the name of the program executable (that we compiled in previous step) `bin/mpimax`. 
+> In our example, the program `mpimax` also takes a parameter `n` - number random integers that each node should create. 
+> 
+
+Here is a sample output: 
+
+![](doc/mpirun-result.png)
+
+
+
+
 
 
 
