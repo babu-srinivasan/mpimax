@@ -60,44 +60,45 @@ First, we will focus on testing the program locally (in this case, from MacOS ma
 
 ## Running the program using `mpirun` locally
 Complete the following pre-requisites. 
-1. Clone the repo https://github.com/babu-srinivasan/mpimax.git Note that you may have to setup ssh key and use the ssh endpoint of the repo to clone.
+1. Clone the repo https://github.com/babu-srinivasan/mpimax.git  
    
 2. Install open MPI library (https://www.open-mpi.org/) on mac
    
    `brew install open-mpi`
 
-I have provided a `Makefile` in the repo to compile the program using `mpicc` compiler. From the root directory of the repo, run `make`. This will compile the C program and generate the executable file `mpimax` in `bin/` directory. 
+Use the provided `Makefile` in the repo to compile the program using `mpicc` compiler. From the root directory of the repo, run `make`. This will compile the C program and generate the executable file `mpimax` in `bin/` directory. 
 
 ![](doc/run-mpimax.png)
 
-Run the program `bin/mpimax` using `mpirun`  (that is part of `open-mpi` library). For our use case, we will just use a basic form of `mpirun` without going into the environment/machine/host specific details. The basic form specifies number of processes to start and the name of the program to execute E.g. `mpirun -np 3 bin/mpimax 5`. 
+Run the program `bin/mpimax` using `mpirun`. For our use case, we will just use a basic form of `mpirun` without going into the environment/machine/host specific details. The basic form specifies number of processes to start and the name of the program to execute E.g. `mpirun -np 3 bin/mpimax 5`. 
 
 `mpirun` parameters used in this example:
 
 >`-np` parameter specifies number of processes to start, in this case `3`, 
 
 > the name of the program executable (that we compiled in previous step) `bin/mpimax`. 
-> In our example, the program `mpimax` also takes a parameter `n` - number random integers that each node should create. 
+> In our example, the program `mpimax` also takes a parameter `n` - number random integers that each node should generate. 
 > 
 
-Here is a sample output: 
+Sample output: 
 
 ![](doc/mpirun-result.png)
 
 
 ## Running the program in a cluster using `AWS ParallelCluster`
-Note: This option will require your own AWS account and you will incur charges for the resources you create in your AWS account. 
+Note: This option requires your own AWS account and you will incur charges for the resources you create in your AWS account. 
 
 ### Prerequisites
-1. AWS Account. 
+1. AWS Account
    
    Instructions for setting up an AWS account - https://docs.aws.amazon.com/parallelcluster/latest/ug/setting-up.html
 
 2. AWS CLI installed and configured with AWS credentials
    
-   Instructions for installing AWS CLI and configuring the credentials. https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html 
+   Instructions for installing AWS CLI and configuring the credentials. https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+
    If you don't want to configure CLI locally, you can use Cloud9 instance for all the CLI commands.
-   Ensure that you can access the AWS resources in your AWS account from the terminal (either local MacOS or Cloud9)
+   Ensure that you can access the AWS resources in your AWS account from the terminal (either local MacOS or Cloud9). This is required for AWS Parallel Cluster CLI to deploy resources in your AWS Acount.
 
 3. EC2 Key pair (existing or generate new) saved as `pem` file e.g. `mpilab.pem`
    
@@ -105,21 +106,21 @@ Note: This option will require your own AWS account and you will incur charges f
 
 
 ### Install, Configure and Create `AWS Parallel Cluster`
-Install AWS ParallelCluster from the terminal - either on MacOS or cloud9.
+1. Install AWS ParallelCluster from the terminal - either on MacOS or cloud9.
 
 `pip3 install "aws-parallelcluster" --upgrade --user`
 
-More details on parall cluster cli installation can be found here https://docs.aws.amazon.com/parallelcluster/latest/ug/install-v3-virtual-environment.html
+`AWS ParallelCluster` Installation instructions: https://docs.aws.amazon.com/parallelcluster/latest/ug/install-v3-virtual-environment.html
 
-To configure `AWS ParallelCluster`, run `plcuster configure --config config.yaml` from the command line. Refer to `https://docs.aws.amazon.com/parallelcluster/latest/ug/install-v3-configuring.html` for details on configuration parameters. 
+2. To configure `AWS ParallelCluster`, run `plcuster configure --config config.yaml` from the command line. Refer to `https://docs.aws.amazon.com/parallelcluster/latest/ug/install-v3-configuring.html` for details on configuration parameters. 
 
-I have provided a sample `config.yaml` file in `pcluster/` directory of the repo.
+You can also use the provided `config.yaml` file in `pcluster/` directory of the repo as the starting point. 
 
-Create the cluster using the configuration file created above. 
+3. Create the cluster using the configuration file created above. 
 
 `pcluster create-cluster --cluster-name mpimax-demo --cluster-configuration config.yaml`
 
-You can list the clusters using the following command and check the `clusterStatus`. Once the cluster is created successfully, we will move to the next step of running our `mpimax` program in the cluster.
+4. You can list the clusters using the following command and check the `clusterStatus`. Once the cluster is created successfully, we will move to the next step of running our `mpimax` program in the cluster.
 
 `pcluster list-clusters`
 
@@ -128,17 +129,17 @@ You can list the clusters using the following command and check the `clusterStat
 
 ### Run `mpimax` program in the cluster
 
-Before we can run the program, we should compile it in the head node of the cluster. So, lets first ssh to the head node using `pcluster ssh` command. The EC2 keypair created earlier will be used for ssh authentication, as shown below
+1. Before we can run the program, we should compile it in the head node of the cluster. So, lets first ssh to the head node using `pcluster ssh` command. The EC2 keypair created earlier will be used for ssh authentication, as shown below
 
 `pcluster ssh --cluster-name mpimax-demo -i mpilab.pem`
  
-Clone the repo https://github.com/babu-srinivasan/mpimax.git in the head node. Note that you may have to setup ssh key and use the ssh endpoint of the repo to clone.
+2. Clone the repo https://github.com/babu-srinivasan/mpimax.git in the head node. Note that you may have to setup ssh key and use the ssh endpoint of the repo to clone.
 
-From the root directory of the repo, run `make`. This will compile the C program and generate the executable file `mpimax` in `bin/` directory. 
+3. From the root directory of the repo, run `make`. This will compile the C program and generate the executable file `mpimax` in `bin/` directory. 
 
 ![](doc/mpi-compile.png)
 
-To run the program, create a script that will be submitted to the scheduler as a batch job. I have provided a sample script `mpimax-job.sbatch` in the repo 
+4. To run the program, create a script that will be submitted to the scheduler as a batch job. I have provided a sample script `mpimax-job.sbatch` in the repo 
 
 ```sh 
 #!/bin/bash
@@ -148,15 +149,15 @@ To run the program, create a script that will be submitted to the scheduler as a
 mpirun ./bin/mpimax
 ```
 
-Submit the job to the queue using `sbatch` command to run the `mpimax` program on 3 different nodes (`-ntasks=3` parameter used in the script specifies the number of nodes to be started).
+5. Submit the job to the queue using `sbatch` command to run the `mpimax` program on 3 different nodes (`-ntasks=3` parameter used in the script specifies the number of nodes to be started).
 
 `sbatch mpimax-job.sbatch` 
 
-Run `sinfo` command to check the status of the nodes. In this example, since we started 3 nodes, you will see 3 in allocated status and 7 in idle status (cluster was configured with 10 max nodes).
+6. Run `sinfo` command to check the status of the nodes. In this example, since we started 3 nodes, you will see 3 in allocated status and 7 in idle status (cluster was configured with 10 max nodes).
 
 ![](doc/sinfo.png)
 
-Finally, to check the results, `cat` the output file e.g. `mpimaxdemo.out`, specified in the batch script.
+7.  Finally, to check the results, `cat` the output file e.g. `mpimaxdemo.out`, specified in the batch script.
 
 Sample output: 
 
