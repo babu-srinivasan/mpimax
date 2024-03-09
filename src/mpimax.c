@@ -21,7 +21,10 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &p);
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 
-    int n = atoi(argv[1]);
+    int n = 5;
+    n = (argc >= 2) ? atoi(argv[1]) : 5;
+    n = (n == 0) ? 5 : n;
+
     int *rnums = malloc(sizeof(int)*n+2);
 
     int localmax=0; 

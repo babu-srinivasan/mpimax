@@ -60,7 +60,8 @@ First, we will focus on testing the program locally (in this case, from MacOS ma
 
 ## Running the program using `mpirun` locally
 Complete the following pre-requisites. 
-1. Clone the repo https://github.com/babu-srinivasan/mpimax.git 
+1. Clone the repo https://github.com/babu-srinivasan/mpimax.git Note that you may have to setup ssh key and use the ssh endpoint of the repo to clone.
+   
 2. Install open MPI library (https://www.open-mpi.org/) on mac
    
    `brew install open-mpi`
@@ -110,61 +111,63 @@ Install AWS ParallelCluster from the terminal - either on MacOS or cloud9.
 
 More details on parall cluster cli installation can be found here https://docs.aws.amazon.com/parallelcluster/latest/ug/install-v3-virtual-environment.html
 
-To configure `AWS ParallelCluster`, run `plcuster configure --config config.yaml` from the command line. Refer to `https://docs.aws.amazon.com/parallelcluster/latest/ug/install-v3-configuring.html` for details on configuration parameters.
+To configure `AWS ParallelCluster`, run `plcuster configure --config config.yaml` from the command line. Refer to `https://docs.aws.amazon.com/parallelcluster/latest/ug/install-v3-configuring.html` for details on configuration parameters. 
 
 I have provided a sample `config.yaml` file in `pcluster/` directory of the repo.
 
 Create the cluster using the configuration file created above. 
+
 `pcluster create-cluster --cluster-name mpimax-demo --cluster-configuration config.yaml`
 
-![]()
-
-You can list the clusters using the following command and check the `clusterStatus`. Once the cluster is created successfully, we will move to the next step of running our mpimax program in the cluster.
+You can list the clusters using the following command and check the `clusterStatus`. Once the cluster is created successfully, we will move to the next step of running our `mpimax` program in the cluster.
 
 `pcluster list-clusters`
 
-![]()
+![](doc/pcluster-list.png)
+
 
 ### Run `mpimax` program in the cluster
 
-We need to compile our program in the head node of the cluster. So, lets first ssh to the head node using `pcluster ssh` command. The EC2 keypair created earlier will be used for ssh authentication. 
+Before we can run the program, we should compile it in the head node of the cluster. So, lets first ssh to the head node using `pcluster ssh` command. The EC2 keypair created earlier will be used for ssh authentication, as shown below
 
-`pcluster ssh --cluster-name mpimax-demo -i ../pcluster/mpilab.pem`
+`pcluster ssh --cluster-name mpimax-demo -i mpilab.pem`
  
+Clone the repo https://github.com/babu-srinivasan/mpimax.git in the head node. Note that you may have to setup ssh key and use the ssh endpoint of the repo to clone.
 
-Clone the repo https://github.com/babu-srinivasan/mpimax.git 
+From the root directory of the repo, run `make`. This will compile the C program and generate the executable file `mpimax` in `bin/` directory. 
 
-First, create a script that runs our MPI program. The script will then be submitted to the scheduler as a batch job. I have provided a sample script `mpimax-job.sbatch` in the repo 
+![](doc/mpi-compile.png)
+
+To run the program, create a script that will be submitted to the scheduler as a batch job. I have provided a sample script `mpimax-job.sbatch` in the repo 
 
 ```sh 
 #!/bin/bash
 #SBATCH --job-name=mpi-max-demo
 #SBATCH --ntasks=3
-#SBATCH --output=%x_%j.out
+#SBATCH --output=mpimaxdemo.out
 mpirun ./bin/mpimax
 ```
 
+Submit the job to the queue using `sbatch` command to run the `mpimax` program on 3 different nodes (`-ntasks=3` parameter used in the script specifies the number of nodes to be started).
 
+`sbatch mpimax-job.sbatch` 
 
+Run `sinfo` command to check the status of the nodes. In this example, since we started 3 nodes, you will see 3 in allocated status and 7 in idle status (cluster was configured with 10 max nodes).
 
+![](doc/sinfo.png)
 
+Finally, to check the results, `cat` the output file e.g. `mpimaxdemo.out`, specified in the batch script.
 
+Sample output: 
 
+```sh
+Node: [2] - Local max of [1,72,86,16,3,] = 86
+Node: [1] - Local max of [73,90,29,2,76,] = 90
+Node: [0] - Local max of [10,3,34,10,43,] = 43
+Global Max = 90
+```
 
+### clean-up
+Delete the cluster using `pcluster delete-cluster` command to stop incurring additional charges for the cluster you created for this demo in your AWS accunt.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+`pcluster delete-cluster --cluster-name mpimax-demo`
